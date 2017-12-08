@@ -66,57 +66,45 @@ void loop() {
     presenca = leituraPresenca(pinPIR);
     
     if (presenca) { 
-        Serial.println("Presenca detectada!");
-        delay(2000);         
+        Serial.println("Presenca detectada!\n");
         do {
             temperatura = leituraTemperatura(pinLM35);
             Serial.print("Temperatura: ");
             Serial.println(temperatura);
             
             if (temperatura > temperaturaRef) {
-                Serial.println("- Ar condicionado: ON");
                 ligarAr();
             }
             else {
-                Serial.println("- Ar condicionado: OFF");
                 desligarAr();
             }
-
-            delay(2000);
             
             luminosidadeExterna = leituraLuminosidade(pinLDR);
             Serial.print("Luminosidade: ");
             Serial.println(luminosidadeExterna);
+            Serial.println();
             
             if ( claro(luminosidadeExterna) and not cortinaAberta ) {
-                Serial.println("- Abrindo cortina\n- Luz: OFF");
                 abrirCortina();
                 apagarLuz();
             }
             else if ( claro(luminosidadeExterna) and cortinaAberta ) {
-                Serial.println("- Luz: OFF");
                 apagarLuz();
             }
             else if ( escuro(luminosidadeExterna) and not cortinaAberta ) {
-                Serial.println("- Luz: ON");
                 acenderLuz();
             }
             else { // if ( escuro(luminosidadeExterna) and cortinaAberta )
-                Serial.println("- Luz: ON\n- Fechando cortina");
                 acenderLuz();
                 fecharCortina();
             }
-
-            delay(2000);
-
-            Serial.println();
-         
-            delay(500);
+            
             reset = not digitalRead(pinRESET);
+            delay(1000);
         
         } while (not reset);
 
-        Serial.println("Apertou reset!");
+        Serial.println("Apertou reset!\n");
         desligarAr();
         apagarLuz();    
         fecharCortina();
@@ -124,10 +112,8 @@ void loop() {
     }
     else {
         Serial.println("Ninguem ainda...");
+        delay(1000);
     }
-
-    delay(2000);
-    delay(500);
 }
 
 
