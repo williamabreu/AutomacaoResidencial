@@ -1,13 +1,15 @@
+//#include <Servo.h>
+
 // pinos dos sensores:
-#define pinLM35  A0
-#define pinLDR   A1
-#define pinPIR    2
-#define pinRESET  3 
+#define pinLM35   A0
+#define pinLDR    A1
+#define pinPIR     2
+#define pinRESET   3 
 
 // pinos dos atuadores:
-#define pinLuz       8
-#define pinMotor     9
-#define pinAr       10
+#define pinLuz       4  // LED BRANCO
+#define pinMotor     5  // LED VERDE
+#define pinAr        6  // LED VERMELHO
 
 
 // CONSTANTES:
@@ -21,10 +23,10 @@ int   luminosidadeExterna;
 bool  presenca;
 
 // variáveis que guardarão o estado do sistema:
-bool arLigado;
-bool luzAcesa;
-bool cortinaAberta;
-bool reset;
+bool arLigado = false;
+bool luzAcesa = false;
+bool cortinaAberta = false;
+bool reset = false;
 
 
 // protótipo de funções para abstração do programa:
@@ -37,8 +39,8 @@ void  acenderLuz();
 void  apagarLuz();
 void  abrirCortina();
 void  fecharCortina();
+void  restar();
 bool  claro(int luminosidade);
-bool  escuro(int luminosidade);
 
 
 
@@ -56,8 +58,6 @@ void setup() {
     apagarLuz();    
     fecharCortina();
     reset = false;
-    
-    Serial.begin(9600);
 }
 
 
@@ -66,61 +66,64 @@ void loop() {
     presenca = leituraPresenca(pinPIR);
     
     if (presenca) { 
-        Serial.println("Presenca detectada!\n");
         do {
             temperatura = leituraTemperatura(pinLM35);
-            Serial.print("Temperatura: ");
-            Serial.println(temperatura);
             
             if (temperatura > temperaturaRef) {
+                // está quente
                 ligarAr();
             }
             else {
+                // está frio
                 desligarAr();
             }
             
             luminosidadeExterna = leituraLuminosidade(pinLDR);
-            Serial.print("Luminosidade: ");
-            Serial.println(luminosidadeExterna);
-            Serial.println();
             
             if ( claro(luminosidadeExterna) and not cortinaAberta ) {
+                // está claro e a cortina está fechada
                 abrirCortina();
                 apagarLuz();
             }
             else if ( claro(luminosidadeExterna) and cortinaAberta ) {
+                // está claro e a cortina está aberta
                 apagarLuz();
             }
-            else if ( escuro(luminosidadeExterna) and not cortinaAberta ) {
+            else if ( not claro(luminosidadeExterna) and not cortinaAberta ) {
+                // está escuro e a cortina está fechada
                 acenderLuz();
             }
-            else { // if ( escuro(luminosidadeExterna) and cortinaAberta )
+            else { 
+                // está escuro e a cortina está aberta
                 acenderLuz();
                 fecharCortina();
             }
             
             reset = not digitalRead(pinRESET);
-            delay(1000);
         
         } while (not reset);
 
-        Serial.println("Apertou reset!\n");
-        desligarAr();
-        apagarLuz();    
-        fecharCortina();
+        resetar();
         reset = false;
-    }
-    else {
-        Serial.println("Ninguem ainda...");
-        delay(1000);
     }
 }
 
 
 
 
-
 // implementação das funções de abstração
+
+void resetar() {
+    if (arLigado) {
+        desligarAr();
+    }
+    if (luzAcesa) {
+        apagarLuz();    
+    }
+    if (cortinaAberta) {
+        fecharCortina();
+    }
+}
 
 float leituraTemperatura(int pin) {
     // https://portal.vidadesilicio.com.br/lm35-medindo-temperatura-com-arduino/
@@ -158,12 +161,24 @@ void apagarLuz() {
 }
 
 void abrirCortina() {
-    digitalWrite(pinMotor, HIGH);
+    for (int i = 0; i < 10; i++) {
+        delay(100);
+        digitalWrite(pinMotor, LOW);
+        delay(100);
+        digitalWrite(pinMotor, HIGH);
+    }
+    
     cortinaAberta = true;
 }
 
 void fecharCortina() {
-    digitalWrite(pinMotor, LOW);
+    for (int i = 0; i < 10; i++) {
+        delay(100);
+        digitalWrite(pinMotor, HIGH);
+        delay(100);
+        digitalWrite(pinMotor, LOW);
+    }
+    
     cortinaAberta = false;
 }
 
@@ -174,10 +189,6 @@ bool claro(int luminosidade) {
     else {
         return false;
     }
-}
-
-bool escuro(int luminosidade) {
-    return not claro(luminosidade);
 }
 
 
