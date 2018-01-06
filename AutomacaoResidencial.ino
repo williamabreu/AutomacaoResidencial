@@ -40,6 +40,7 @@ void  apagarLuz();
 void  abrirCortina();
 void  fecharCortina();
 void  restar();
+bool  quente(float temperatura);
 bool  claro(int luminosidade);
 
 
@@ -68,33 +69,29 @@ void loop() {
     if (presenca) { 
         do {
             temperatura = leituraTemperatura(pinLM35);
+            bool estaQuente = quente(temperatura);
             
-            if (temperatura > temperaturaRef) {
-                // está quente
+            if (estaQuente) {
                 ligarAr();
             }
             else {
-                // está frio
                 desligarAr();
             }
             
             luminosidadeExterna = leituraLuminosidade(pinLDR);
+            bool estaClaro = claro(luminosidadeExterna);
             
-            if ( claro(luminosidadeExterna) and not cortinaAberta ) {
-                // está claro e a cortina está fechada
+            if (estaClaro and not cortinaAberta) {
                 abrirCortina();
                 apagarLuz();
             }
-            else if ( claro(luminosidadeExterna) and cortinaAberta ) {
-                // está claro e a cortina está aberta
+            else if (estaClaro and cortinaAberta) {
                 apagarLuz();
             }
-            else if ( not claro(luminosidadeExterna) and not cortinaAberta ) {
-                // está escuro e a cortina está fechada
+            else if (not estaClaro and not cortinaAberta) {
                 acenderLuz();
             }
             else { 
-                // está escuro e a cortina está aberta
                 acenderLuz();
                 fecharCortina();
             }
@@ -107,7 +104,6 @@ void loop() {
         reset = false;
     }
 }
-
 
 
 
@@ -180,6 +176,15 @@ void fecharCortina() {
     }
     
     cortinaAberta = false;
+}
+
+bool quente(float temperatura) {
+    if (temperatura >= temperaturaRef) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 bool claro(int luminosidade) {
